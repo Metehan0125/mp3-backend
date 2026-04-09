@@ -8,19 +8,18 @@ app = Flask(__name__)
 DOWNLOAD_DIR = "downloads"
 os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 
+# Sağlık kontrolü (DEBUG için)
+@app.route("/", methods=["GET"], strict_slashes=False)
+def health():
+    return "OK", 200
 
-# ✅ MP3 indirme
 @app.route("/download", methods=["POST"], strict_slashes=False)
 def download_mp3():
-    
     data = request.get_json(silent=True)
-
     if not data:
         return jsonify({"error": "JSON body yok"}), 400
 
     url = data.get("url")
-
-
     if not url or not url.startswith("http"):
         return jsonify({"error": "Geçersiz URL"}), 400
 
@@ -38,28 +37,22 @@ def download_mp3():
     ]
 
     try:
-        subprocess.run(cmd, check=True)
-    except subprocess.CalledProcessError:
-        return jsonify({"error": "İndirme başarısız"}), 500
+        subprocess.run(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            check=True
+        )
+    except subprocess.CalledProcessError as e:
+        return jsonify({"error": "İndirme başarısız", "details": e.stderr}), 500
 
-    return jsonify({
-        "status": "ok",
-        "file": filename
-    })
+    return jsonify({"status": "ok", "file": filename})
 
-
-# ✅ MP3 dosyasını gönderme
 @app.route("/file/<filename>", methods=["GET"], strict_slashes=False)
 def get_file(filename):
-    return send_from_directory(
-        DOWNLOAD_DIR,
-        filename,
-        as_attachment=True
-    )
-
-
+    return send_from_directory(DOWNLOAD_DIR, filename, as_attachment=True)
 
 if __name__ == "__main__":
-    import os
-    port = os.environ.get("PORT", 5000)
+    port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
