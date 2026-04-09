@@ -12,8 +12,14 @@ os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 # ✅ MP3 indirme
 @app.route("/download", methods=["POST"])
 def download_mp3():
-    data = request.json
+    
+    data = request.get_json(silent=True)
+
+    if not data:
+        return jsonify({"error": "JSON body yok"}), 400
+
     url = data.get("url")
+
 
     if not url or not url.startswith("http"):
         return jsonify({"error": "Geçersiz URL"}), 400
