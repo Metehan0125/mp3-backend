@@ -5,14 +5,21 @@ import uuid
 
 app = Flask(__name__)
 
+# Download klasörü
 DOWNLOAD_DIR = "downloads"
 os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 
-# Sağlık kontrolü (DEBUG için)
+# -----------------------------
+# Health check (root)
+# -----------------------------
 @app.route("/", methods=["GET"], strict_slashes=False)
 def health():
     return "OK", 200
 
+
+# -----------------------------
+# MP3 Download Endpoint
+# -----------------------------
 @app.route("/download", methods=["POST"], strict_slashes=False)
 def download_mp3():
     data = request.get_json(silent=True)
@@ -45,14 +52,32 @@ def download_mp3():
             check=True
         )
     except subprocess.CalledProcessError as e:
-        return jsonify({"error": "İndirme başarısız", "details": e.stderr}), 500
+        return jsonify({
+            "error": "İndirme başarısız",
+            "details": e.stderr
+        }), 500
 
-    return jsonify({"status": "ok", "file": filename})
+    return jsonify({
+        "status": "ok",
+        "file": filename
+    })
 
+
+# -----------------------------
+# File Download Endpoint
+# -----------------------------
 @app.route("/file/<filename>", methods=["GET"], strict_slashes=False)
 def get_file(filename):
-    return send_from_directory(DOWNLOAD_DIR, filename, as_attachment=True)
+    return send_from_directory(
+        DOWNLOAD_DIR,
+        filename,
+        as_attachment=True
+    )
 
+
+# -----------------------------
+# MAIN ENTRY (CLOUD-READY)
+# -----------------------------
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
+    port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port)
