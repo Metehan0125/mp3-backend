@@ -10,7 +10,7 @@ os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 
 
 # ✅ MP3 indirme
-@app.route("/download", methods=["POST"])
+@app.route("/download", methods=["POST"], strict_slashes=False)
 def download_mp3():
     
     data = request.get_json(silent=True)
@@ -49,7 +49,7 @@ def download_mp3():
 
 
 # ✅ MP3 dosyasını gönderme
-@app.route("/file/<filename>", methods=["GET"])
+@app.route("/file/<filename>", methods=["GET"], strict_slashes=False)
 def get_file(filename):
     return send_from_directory(
         DOWNLOAD_DIR,
